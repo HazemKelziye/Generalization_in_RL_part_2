@@ -1,6 +1,6 @@
-import json
 import numpy as np
-from functions import create_combined_dataset
+import json
+
 
 class DataProcessor:
     state_space_dimension = 6
@@ -54,7 +54,20 @@ class DataProcessor:
 
     @staticmethod
     def crop_data(states, actions):
-        return states[:200000], actions[:200000]
+        # try returning any 100_000 states and actions not only the first 100_000th
+        if len(states) > 100_000:
+        # Generate a list of 100,000 unique random indices
+            indices = np.random.choice(len(states), size=100_000, replace=False)
+
+            # Use the indices to select elements from both lists
+            states_cropped = [states[i] for i in indices]
+            actions_cropped = [actions[i] for i in indices]
+        else:
+        # If there are not enough elements, just return the original lists
+            print("something is wrong")
+            states_cropped, actions_cropped = states, actions
+
+        return states_cropped, actions_cropped
 
     def round_actions(self):
         """
@@ -88,10 +101,10 @@ class DataProcessor:
             for seven_states in self.__all_states:
                 # Iterate through each state in the current episode
                 for one_state in seven_states:
-                    # Calculate the number of zeros needed to make the
+                    # Calculate the number of dummy entries needed to make the
                     # state's length equal to state_space_dimension
                     additional_elements = self.state_space_dimension - len(one_state)
-                    one_state.extend([0] * additional_elements)  # This modifies the 'state' in-place,
+                    one_state.extend([-100] * additional_elements)  # This modifies the 'state' in-place,
                     # which is a part of self.__all_states
 
     def reshaped_to_2d_np_array(self):
@@ -103,45 +116,3 @@ class DataProcessor:
         self.convert_states_to_np()
         self.round_actions()
         self.__all_states = np.array([arr.T for arr in self.__all_states], dtype=np.float32)
-
-
-if __name__ == "__main__":
-    # create acrobot_env
-    acrobot_env_path = "../ENV_datasets/acrobot_ds.json"
-    acrobot_env = DataProcessor()
-    acrobot_env.process_file(acrobot_env_path)
-    acrobot_env.add_dummy_states()
-    acrobot_env.reshaped_to_2d_np_array()
-    acrobot_env_sa = (acrobot_env.all_states, acrobot_env.all_actions)
-
-    # create cartpole_env
-    cartpole_env_path = "../ENV_datasets/cartpole_ds.json"
-    cartpole_env = DataProcessor()
-    cartpole_env.process_file(cartpole_env_path)
-    cartpole_env.add_dummy_states()
-    cartpole_env.reshaped_to_2d_np_array()
-    cartpole_env_sa = (cartpole_env.all_states, cartpole_env.all_actions)
-
-    # create mountaincar_env
-    mountaincar_env_path = "../ENV_datasets/mountaincar_ds.json"
-    mountaincar_env = DataProcessor()
-    mountaincar_env.process_file(mountaincar_env_path)
-    mountaincar_env.add_dummy_states()
-    mountaincar_env.reshaped_to_2d_np_array()
-    mountaincar_env_sa = (mountaincar_env.all_states, mountaincar_env.all_actions)
-
-    # create pendulum_env
-    pendulum_env_path = "../ENV_datasets/pendulum_ds.json"
-    pendulum_env = DataProcessor()
-    pendulum_env.process_file(pendulum_env_path)
-    pendulum_env.add_dummy_states()
-    pendulum_env.reshaped_to_2d_np_array()
-    pendulum_env_sa = (pendulum_env.all_states, pendulum_env.all_actions)
-
-
-    envs_sa = [acrobot_env_sa, cartpole_env_sa, mountaincar_env_sa, pendulum_env_sa]
-
-    states_dataset, pendulum_actions_labels, mountaincar_actions_labels, \
-        cartpole_actions_labels, acrobot_actions_labels = create_combined_dataset(envs_sa)
-
-    print(states_dataset.shape)

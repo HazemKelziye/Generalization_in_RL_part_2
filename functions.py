@@ -17,7 +17,7 @@ def create_combined_dataset(environments):
         raise ValueError("The environments argument must contain exactly 4 environments.")
 
     # Prepare dummy data
-    dummy_state = np.zeros((num_samples, 6, 7))
+    dummy_state = np.full((num_samples, 6, 7), -100)
     dummy_action = np.full((num_samples,), -10)
 
     # Prepare real data from environments
@@ -34,7 +34,6 @@ def create_combined_dataset(environments):
     # Generate combined datasets for each combination
     for combo in combinations:
         combined_states = [real_data[i][0] if bit == '1' else dummy_state for i, bit in enumerate(combo)]
-        # combined_actions = [real_data[i][1] if bit == '1' else dummy_action for i, bit in enumerate(combo)]
         # When setting up combined_actions in the dataset generation loop:
         combined_actions = [(real_data[i][1].flatten() if bit == '1' else dummy_action) for i, bit in enumerate(combo)]
 
